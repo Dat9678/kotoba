@@ -1,7 +1,7 @@
 /* Kotoba Studio - cho phep dung khi khong co mang.
    Uu tien tai ban moi tu mang; chi khi mat mang moi dung ban da luu,
    nen cap nhat moi luon den ngay va khong bi ket ban cu. */
-var CACHE = 'kotoba-202610291928';
+var CACHE = 'kotoba-202610301844';
 var FILES = ['./', './index.html', './app.js', './style.css', './data/n3.js', './data/n3-examples.js', './data/n2.js', './data/n1.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
