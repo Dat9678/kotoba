@@ -4,13 +4,17 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '1.4';
+  var APP_VERSION = '1.5';
   var STORE_KEY = 'kotoba.studio.v1';
   var LEVELS = [
     { code: 'N3', title: 'JLPT N3 · Trung cấp', color: '#2E5B45' },
     { code: 'N2', title: 'JLPT N2 · Trung cao cấp', color: '#24476B' },
-    { code: 'N1', title: 'JLPT N1 · Cao cấp', color: '#8C3B2E' }
+    { code: 'N1', title: 'JLPT N1 · Cao cấp', color: '#8C3B2E' },
+    { code: 'K3', kind: 'kanji', short: 'N3', title: 'Kanji N3 · gồm cả N5, N4', color: '#2E5B45' },
+    { code: 'K2', kind: 'kanji', short: 'N2', title: 'Kanji N2', color: '#24476B' },
+    { code: 'K1', kind: 'kanji', short: 'N1', title: 'Kanji N1', color: '#8C3B2E' }
   ];
+  function isKanji(code) { return code === 'K3' || code === 'K2' || code === 'K1'; }
   var COLORS = ['#2E5B45', '#24476B', '#8C3B2E', '#6A4C93', '#7A5C12', '#2F6F73', '#9A4565', '#4E5D2C'];
   var MAX_PROFILES = 12;
   var AUTHOR = 'Ngô Tấn Đạt';
@@ -22,11 +26,19 @@
   var DATA = (window.KOTOBA_DATA && typeof window.KOTOBA_DATA === 'object') ? window.KOTOBA_DATA : {};
   var EXAMPLES = (window.KOTOBA_EXAMPLES && typeof window.KOTOBA_EXAMPLES === 'object') ? window.KOTOBA_EXAMPLES : {};
   var KANJI = (window.KOTOBA_KANJI && typeof window.KOTOBA_KANJI === 'object' && window.KOTOBA_KANJI.k) ? window.KOTOBA_KANJI : null;
+  /* Mục Kanji: danh sách 2136 chữ (data/kanji-list.js) + dữ liệu từng đợt (data/kj-XX.js). Thiếu file thì mục này trống, phần Từ vựng không ảnh hưởng. */
+  var KJ = (window.KOTOBA_KJ && typeof window.KOTOBA_KJ === 'object') ? window.KOTOBA_KJ : {};
+  var KJD = (window.KOTOBA_KJD && typeof window.KOTOBA_KJD === 'object') ? window.KOTOBA_KJD : {};
   var wordCache = {};
 
   function words(code) {
     if (wordCache[code]) return wordCache[code];
     var src = Array.isArray(DATA[code]) ? DATA[code] : [];
+    if (isKanji(code)) {
+      src = [];
+      var chars = typeof KJ[code] === 'string' ? Array.from(KJ[code]) : [];
+      for (var q = 0; q < chars.length; q++) src.push({ id: q + 1, w: chars[q] });
+    }
     var list = [];
     var map = {};
     for (var i = 0; i < src.length; i++) {
@@ -44,6 +56,11 @@
     if (!lv || typeof lv !== 'object') return null;
     var e = lv[id];
     return (e && typeof e === 'object') ? e : null;
+  }
+  function kanjiReady(code) {
+    var w = words(code).list, n = 0;
+    for (var i = 0; i < w.length; i++) if (KJD[w[i].w]) n++;
+    return n;
   }
   function exampleCount(code) {
     var lv = EXAMPLES[code];
@@ -106,7 +123,7 @@
       var st = (p.settings && typeof p.settings === 'object') ? p.settings : {};
       var pl = (st.play && typeof st.play === 'object') ? st.play : {};
       np.settings = {
-        kanaCard: !!st.kanaCard, kanaEx: st.kanaEx !== false, vi: st.vi !== false, kanji: !!st.kanji,
+        kanaCard: !!st.kanaCard, kanaEx: st.kanaEx !== false, vi: st.vi !== false, kanji: !!st.kanji, kjTip: !!st.kjTip,
         rate: [0.7, 0.85, 1].indexOf(st.rate) >= 0 ? st.rate : 0.85,
         play: { content: ['word', 'meaning', 'full'].indexOf(pl.content) >= 0 ? pl.content : 'meaning', gap: [1, 2, 3, 4].indexOf(pl.gap) >= 0 ? pl.gap : 4 }
       };
@@ -115,6 +132,7 @@
     if (!out.profiles.length) return defaultState();
     if (typeof s.active === 'string') out.active = s.active;
     if (typeof s.level === 'string' && LEVELS.some(function (l) { return l.code === s.level; })) out.level = s.level;
+    out.section = s.section === 'kanji' ? 'kanji' : 'vocab';
     if (s.voice && typeof s.voice === 'object') {
       out.voice.ja = typeof s.voice.ja === 'string' ? s.voice.ja : '';
       out.voice.vi = typeof s.voice.vi === 'string' ? s.voice.vi : '';
@@ -577,6 +595,11 @@
   function profileChips(p) {
     return LEVELS.map(function (L) {
       var d = words(L.code);
+      if (L.kind === 'kanji') {
+        var kl = p.lv[L.code];
+        if (!d.list.length || !kl || !kl.seen.length) return '';
+        return '<span class="chip on">漢字 ' + L.short + ' · ' + countIn(kl.seen, assignedIds(L.code, kl)) + '/' + assignedIds(L.code, kl).length + '</span>';
+      }
       if (!d.list.length) return '<span class="chip">' + L.code + ' · chưa có từ</span>';
       var l = p.lv[L.code];
       var ids = assignedIds(L.code, l);
@@ -695,8 +718,19 @@
     h += '<span style="font-family:var(--f-display);font-weight:700">Kotoba <span class="spark" style="color:var(--accent)">✦</span></span>';
     h += '</div>';
     h += '<div><h1 class="h1">Hôm nay học cấp độ nào?</h1><p class="small muted" style="margin:4px 0 0">Tiến độ của từng cấp độ được lưu riêng cho ' + esc(p.name) + '.</p></div>';
+    var sec = state.section === 'kanji' ? 'kanji' : 'vocab';
+    h += '<div class="sections" role="tablist" aria-label="Chọn mục học">';
+    h += '<button class="section-btn' + (sec === 'vocab' ? ' on' : '') + '" role="tab" aria-selected="' + (sec === 'vocab') + '" data-act="section" data-v="vocab"><span lang="ja">言葉</span>Từ vựng</button>';
+    h += '<button class="section-btn' + (sec === 'kanji' ? ' on' : '') + '" role="tab" aria-selected="' + (sec === 'kanji') + '" data-act="section" data-v="kanji"><span lang="ja">漢字</span>Kanji</button>';
+    h += '</div>';
+    if (sec === 'kanji') {
+      var kdone = 0; for (var kc in KJD) if (Object.prototype.hasOwnProperty.call(KJD, kc)) kdone++;
+      h += '<p class="small muted" style="margin:0">2136 chữ kanji thông dụng, đi từ N3 (gồm cả N5, N4) lên N2, N1. Hiện có ' + kdone + ' chữ đã có mẹo nhớ; các chữ còn lại sẽ được bổ sung theo đợt.</p>';
+    }
 
     LEVELS.forEach(function (L) {
+      if ((L.kind === 'kanji' ? 'kanji' : 'vocab') !== sec) return;
+      var unit = L.kind === 'kanji' ? ' chữ' : ' từ';
       var d = words(L.code);
       var has = d.list.length > 0;
       var l = p.lv[L.code];
@@ -706,9 +740,9 @@
       var pct = ids.length ? Math.round(seen / ids.length * 100) : 0;
       var a = has ? assignOf(L.code, l) : null;
       h += '<button class="level" data-act="pick-level" data-level="' + L.code + '"' + (has ? '' : ' aria-disabled="true"') + '>';
-      h += '<span class="row between"><span class="row"><span class="level-code" style="background:' + L.color + '">' + L.code + '</span>';
-      h += '<span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:700">' + L.title + '</span><span class="small muted">' + (has ? d.list.length + ' từ · ' + exampleCount(L.code) + ' từ có ví dụ' : 'Chờ danh sách từ') + '</span></span></span>';
-      h += '<span class="tag ' + (has ? 'ok' : 'off') + '">' + (has ? 'Sẵn sàng' : 'Chưa có từ') + '</span></span>';
+      h += '<span class="row between"><span class="row"><span class="level-code" style="background:' + L.color + '">' + (L.short || L.code) + '</span>';
+      h += '<span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:700">' + L.title + '</span><span class="small muted">' + (has ? (L.kind === 'kanji' ? d.list.length + ' chữ · ' + kanjiReady(L.code) + ' chữ có mẹo' : d.list.length + ' từ · ' + exampleCount(L.code) + ' từ có ví dụ') : 'Chờ danh sách' + unit) + '</span></span></span>';
+      h += '<span class="tag ' + (has ? 'ok' : 'off') + '">' + (has ? 'Sẵn sàng' : 'Chưa có' + unit) + '</span></span>';
       h += '<span class="bar"><i style="width:' + pct + '%;background:' + L.color + '"></i></span>';
       h += '<span class="row between small" style="color:var(--ink-2)"><span>Đã học ' + seen + ' · Còn ôn ' + review + '</span><span>' + (has ? (a.all ? 'Cả ' + a.n + ' cụm' : 'Được giao cụm ' + a.from + '–' + a.to) : '—') + '</span></span>';
       h += '</button>';
@@ -725,6 +759,7 @@
     var curG = currentGroup(code, l);
     var doneCount = 0;
     g.forEach(function (ids) { if (countIn(l.seen, ids) === ids.length) doneCount++; });
+    var kj = L.kind === 'kanji', unit = kj ? 'chữ' : 'từ';
 
     var h = '';
     h += '<div class="topbar">';
@@ -732,13 +767,13 @@
     h += '<button class="btn" data-act="to-levels" style="min-height:40px;border-radius:999px">‹ Đổi cấp độ</button>';
     h += '</div>';
     h += '<div><h1 class="h1">' + esc(L.title.split(' · ')[0]) + ' · Chọn cụm học</h1>';
-    h += '<p class="small muted" style="margin:4px 0 0">' + d.list.length + ' từ chia thành ' + g.length + ' cụm, mỗi cụm ' + GROUP_SIZE + ' từ. Đã xem hết ' + doneCount + ' cụm.</p></div>';
+    h += '<p class="small muted" style="margin:4px 0 0">' + d.list.length + ' ' + unit + ' chia thành ' + g.length + ' cụm, mỗi cụm ' + GROUP_SIZE + ' ' + unit + '. Đã xem hết ' + doneCount + ' cụm.</p></div>';
 
     if (l.cur != null && d.map[l.cur]) {
       var scope = scopeIds(code, l), at = scope.indexOf(l.cur);
       h += '<button class="continue" data-act="to-study">';
       h += '<span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="continue-k">HỌC TIẾP</span>';
-      h += '<span class="continue-t">' + (curG ? 'Cụm ' + curG + ' · từ ' + groupLabel(code, curG) : 'Cả ' + d.list.length + ' từ') + '</span>';
+      h += '<span class="continue-t">' + (curG ? 'Cụm ' + curG + ' · ' + unit + ' ' + groupLabel(code, curG) : 'Cả ' + d.list.length + ' ' + unit) + '</span>';
       h += '<span class="continue-s">Đang ở thẻ ' + (at >= 0 ? at + 1 : 1) + ' / ' + scope.length + '</span></span>';
       h += '<span class="continue-arrow" aria-hidden="true">' + ICON.right + '</span></button>';
     }
@@ -752,14 +787,14 @@
       var tagCls = done ? 'ok' : (isCur || seen) ? 'cur' : 'off';
       h += '<button class="gtile' + (isCur ? ' cur' : '') + (out ? ' out' : '') + '" data-act="pick-group" data-g="' + k + '" aria-label="Cụm ' + k + ', từ ' + groupLabel(code, k) + ', đã học ' + seen + ' trên ' + ids.length + '">';
       h += '<span class="row between"><span class="gtile-no">Cụm ' + k + '</span><span class="gtag ' + tagCls + '">' + tag + '</span></span>';
-      h += '<span class="small muted">Từ ' + groupLabel(code, k) + '</span>';
+      h += kj ? '<span class="gtile-kj" lang="ja">' + esc(ids.slice(0, 6).map(function (x) { return d.map[x] ? d.map[x].w : ''; }).join('')) + '…</span>' : '<span class="small muted">Từ ' + groupLabel(code, k) + '</span>';
       h += '<span class="bar" style="height:5px"><i style="width:' + Math.round(seen / ids.length * 100) + '%"></i></span>';
       h += '<span class="row between small" style="color:var(--ink-2);font-variant-numeric:tabular-nums"><span>' + seen + '/' + ids.length + '</span><span>★ ' + star + '</span></span>';
       h += '</button>';
     });
     h += '</div>';
 
-    h += '<button class="btn" data-act="pick-group" data-g="0" style="min-height:52px;font-weight:700">Học liền cả ' + d.list.length + ' từ</button>';
+    h += '<button class="btn" data-act="pick-group" data-g="0" style="min-height:52px;font-weight:700">Học liền cả ' + d.list.length + ' ' + unit + '</button>';
 
     h += '<section class="panel">';
     h += '<h2 class="h2" style="font-size:14px">Phần học được giao cho ' + esc(p.name) + '</h2>';
@@ -1004,20 +1039,176 @@
         if (!d || seen[k]) return;
         seen[k] = 1;
         var u = used[k] || used[c];
-        rows += '<div class="kj-row"><span class="kj-char" lang="ja">' + esc(k) + '</span><span class="kj-info">';
+        var famOpen = ui.fam && ui.fam.id === w.id && ui.fam.k === k;
+        rows += '<div class="kj-row"><button class="kj-char kj-tap' + (famOpen ? ' on' : '') + '" lang="ja" data-act="kj-fam" data-k="' + esc(k) + '" aria-expanded="' + famOpen + '" aria-label="Xem các từ có chữ ' + esc(k) + '">' + esc(k) + '</button><span class="kj-info">';
         rows += '<span class="kj-hv">' + esc(d.h || '—') + (d.h ? '' : ' <span class="small muted">(chữ do Nhật tạo)</span>') + '</span>';
         rows += '<span class="kj-line"><b>On</b><span lang="ja">' + esc(d.on || '—') + '</span></span>';
         rows += '<span class="kj-line"><b>Kun</b><span lang="ja">' + esc(d.kun || '—') + '</span></span>';
         if (u) rows += '<span class="kj-used">Trong từ này đọc <span lang="ja">' + esc(u[1]) + '</span> · âm ' + (u[2] === 'on' ? 'On' : 'Kun') + '</span>';
         rows += '</span></div>';
+        if (famOpen) rows += '<div class="kj-fam"><div class="small" style="font-weight:700">Họ từ của chữ <span lang="ja">' + esc(k) + '</span></div>' + famList(k, 20) + '</div>';
       });
       if (!rows) return '';
       var h = '<section class="kanji"><div class="row between" style="align-items:baseline"><h2 class="h2" style="font-size:15px">Phân tích kanji</h2>';
       if (info && info.hv) h += '<span class="kj-word">' + esc(info.hv) + '</span>';
       h += '</div>';
       if (info && info.sp) h += '<div class="small muted">Từ này có cách đọc đặc biệt, không ghép theo từng chữ.</div>';
+      h += '<div class="small muted">Chạm vào chữ kanji để xem các từ khác có chữ đó.</div>';
       return h + rows + '</section>';
     } catch (err) { return ''; }
+  }
+
+  /* ---------------- mục Kanji: thẻ học từng chữ ---------------- */
+  function kanjiInfo(c) {
+    var d = KJD[c];
+    if (d && typeof d === 'object') return d;
+    var k = KANJI && KANJI.k ? KANJI.k[c] : null;
+    return k ? { h: k.h, on: k.on, kun: k.kun } : null;
+  }
+  /* Họ từ: các từ vựng trong app có chứa chữ kanji này */
+  var famCache = null;
+  function famOf(c) {
+    if (!famCache) {
+      famCache = {};
+      LEVELS.forEach(function (L) {
+        if (L.kind === 'kanji') return;
+        words(L.code).list.forEach(function (w) {
+          var seen = {};
+          Array.from(w.w).forEach(function (ch) {
+            if (seen[ch] || !/[㐀-鿿]/.test(ch)) return;
+            seen[ch] = 1;
+            (famCache[ch] = famCache[ch] || []).push({ code: L.code, w: w });
+          });
+        });
+      });
+    }
+    return famCache[c] || [];
+  }
+  function famList(c, limit) {
+    var all = famOf(c), h = '';
+    if (!all.length) return '<div class="small muted">Chưa có từ vựng nào trong app chứa chữ này.</div>';
+    h += '<div class="fam">';
+    all.slice(0, limit).forEach(function (x) {
+      h += '<button class="fam-item" data-act="fam-go" data-code="' + x.code + '" data-id="' + x.w.id + '">';
+      h += '<span class="fam-w" lang="ja">' + esc(x.w.w) + '</span><span class="fam-r" lang="ja">' + esc(x.w.r || '') + '</span>';
+      h += '<span class="fam-m">' + esc(x.w.m || '') + '</span><span class="fam-lv">' + x.code + ' ›</span></button>';
+    });
+    h += '</div>';
+    if (all.length > limit) h += '<div class="small muted">… và ' + (all.length - limit) + ' từ khác.</div>';
+    return h;
+  }
+  function kanjiSpeech(info) {
+    if (!info) return '';
+    var parts = [];
+    String(info.on || '').split('・').forEach(function (x) { if (x) parts.push(x); });
+    String(info.kun || '').split('・').forEach(function (x) { x = x.replace(/[()（）.]/g, ''); if (x) parts.push(x); });
+    return parts.join('、');
+  }
+  function viewKanjiStudy() {
+    var p = profile(), code = state.level, L = levelInfo(code), d = words(code);
+    var l = lvState(p, code);
+    var list = studyList(p, code);
+    var inRange = scopeIds(code, l);
+    var curG = currentGroup(code, l), nG = groupsOf(code).length;
+    var seenCount = countIn(l.seen, inRange);
+    var reviewCount = countIn(l.review, inRange);
+    var pos = list.indexOf(l.cur);
+    if (pos < 0 && list.length) { pos = 0; l.cur = list[0]; }
+    var w = pos >= 0 ? d.map[l.cur] : null;
+    if (w && l.seen.indexOf(w.id) < 0) { l.seen.push(w.id); seenCount++; save(); }
+    var st = p.settings;
+    var info = w ? kanjiInfo(w.w) : null;
+
+    var h = '';
+    h += '<header style="display:flex;flex-direction:column;gap:6px">';
+    h += '<div class="eyebrow">日本語をもっと楽しく · KANJI EVERY DAY</div>';
+    h += '<div class="row between"><div class="row" style="align-items:baseline;gap:6px"><h1 class="brand">Kotoba <span class="spark">✦</span> Studio</h1><span class="small muted" style="font-weight:600">v' + APP_VERSION + '</span></div>';
+    h += '<span class="pill" aria-label="Thẻ hiện tại">' + (list.length ? (pos + 1) + ' / ' + list.length : '0 / 0') + '</span></div>';
+    h += '<div class="byline">Created by <span class="sig">' + AUTHOR + '<svg class="sig-line" width="150" height="10" viewBox="0 0 150 10" aria-hidden="true"><path d="M2 7 C 30 1, 60 10, 95 5 S 140 3, 148 6"/></svg></span></div>';
+    h += '</header>';
+
+    h += '<div class="topbar">';
+    h += '<button class="who" data-act="to-profiles"><span class="avatar" style="background:' + esc(p.color) + '">' + esc(initial(p.name)) + '</span><span style="display:flex;flex-direction:column;min-width:0"><span class="who-name">' + esc(p.name) + '</span><span class="who-sub">Đổi người học ›</span></span></button>';
+    h += '<button class="btn" data-act="to-levels" style="min-height:40px;border-radius:999px">Kanji ' + esc(L.short) + ' ' + ICON.chev + '</button>';
+    h += '</div>';
+
+    h += '<button class="groupbar" data-act="to-groups">';
+    h += '<span style="display:flex;flex-direction:column;gap:2px;min-width:0">';
+    h += '<span class="groupbar-k">KANJI ' + esc(L.short) + ' · ' + (curG ? 'CỤM ' + curG + ' / ' + nG : 'CẢ ' + d.list.length + ' CHỮ') + '</span>';
+    h += '<span class="groupbar-t">' + (curG ? 'Chữ ' + groupLabel(code, curG) + ' · ' : '') + 'đã học ' + seenCount + '/' + inRange.length + ' · ★ ' + reviewCount + '</span></span>';
+    h += '<span class="groupbar-a">Đổi cụm ›</span></button>';
+    h += '<div class="bar" aria-hidden="true"><i style="width:' + (inRange.length ? Math.round(seenCount / inRange.length * 100) : 0) + '%"></i></div>';
+
+    h += '<div class="modes" role="group" aria-label="Chế độ học">';
+    h += '<button class="mode' + (l.mode === 'all' ? ' on' : '') + '" data-act="mode-all" aria-pressed="' + (l.mode === 'all') + '">Học tất cả</button>';
+    h += '<button class="mode' + (l.mode === 'review' ? ' on' : '') + '" data-act="mode-review" aria-pressed="' + (l.mode === 'review') + '">Chỉ ôn "Còn ôn" (' + reviewCount + ')</button>';
+    h += '<button class="mode' + (l.shuffle ? ' on' : '') + '" data-act="shuffle" aria-pressed="' + l.shuffle + '">Xáo trộn</button>';
+    h += '</div>';
+
+    if (!w) {
+      h += '<div class="empty">' + (l.mode === 'review'
+        ? 'Chưa có chữ nào được đánh dấu "Còn ôn" trong phần học này. Khi học, bấm ☆ Còn ôn ở những chữ chưa thuộc.'
+        : 'Phần học này chưa có chữ nào.') + '</div>';
+      if (l.mode === 'review') h += '<button class="btn primary" data-act="mode-all">Quay lại học tất cả</button>';
+      h += footer();
+      return h;
+    }
+
+    var isLast = pos === list.length - 1, isFirst = pos === 0;
+    var inReview = l.review.indexOf(w.id) >= 0;
+    var tip = info && info.t ? info.t : '';
+
+    h += '<button class="card kjcard' + (ui.flipped ? ' back' : '') + (ui.slide ? ' ' + ui.slide : '') + '" id="card" data-act="flip" aria-label="' + (ui.flipped ? 'Mặt sau, chạm để lật lại' : 'Mặt trước, chạm để xem âm đọc') + '">';
+    if (!ui.flipped) {
+      h += '<span class="side-tag">MẶT TRƯỚC · KANJI</span>';
+      h += '<span class="kj-big" lang="ja">' + esc(w.w) + '</span>';
+      if (st.kjTip && tip) h += '<span class="kj-story"><span class="label">MẸO NHỚ</span><span>' + esc(tip) + '</span></span>';
+      else if (st.kjTip) h += '<span class="kj-story muted">Chữ này chưa có mẹo nhớ, sẽ được bổ sung theo đợt.</span>';
+      h += '<span class="hint">Chạm để lật · Vuốt trái/phải để đổi chữ</span>';
+    } else {
+      h += '<span class="side-tag">MẶT SAU · ÂM ĐỌC</span>';
+      h += '<span class="kj-mid" lang="ja">' + esc(w.w) + '</span>';
+      if (info) {
+        h += '<span class="kj-hvbig">' + esc(info.h || '—') + '</span>';
+        if (info.m) h += '<span class="meaning">' + esc(info.m) + '</span>';
+        h += '<span class="kj-read"><span class="kj-line"><b>On</b><span lang="ja">' + esc(info.on || '—') + '</span></span>';
+        h += '<span class="kj-line"><b>Kun</b><span lang="ja">' + esc(info.kun || '—') + '</span></span></span>';
+      } else {
+        h += '<span class="small muted">Chữ này chưa có dữ liệu âm đọc, sẽ được bổ sung theo đợt.</span>';
+      }
+      h += '<span class="hint">Chạm để lật lại</span>';
+    }
+    h += '</button>';
+    h += '<button class="btn tipbtn' + (st.kjTip ? ' on' : '') + '" data-act="kj-tip" aria-pressed="' + !!st.kjTip + '">' + (st.kjTip ? 'Ẩn mẹo' : 'Hiện mẹo') + '</button>';
+
+    h += '<nav class="nav" aria-label="Chuyển chữ">';
+    h += '<button class="btn" data-act="prev"' + (isFirst ? ' disabled' : '') + '>' + ICON.left + 'Trước</button>';
+    h += '<button class="btn star' + (inReview ? ' on' : '') + '" data-act="toggle-review" aria-pressed="' + inReview + '">' + (inReview ? ICON.starOn + 'Đã đánh dấu' : ICON.star + 'Còn ôn') + '</button>';
+    h += '<button class="btn primary" data-act="next"' + (isLast ? ' disabled' : '') + '>Tiếp' + ICON.right + '</button>';
+    h += '</nav>';
+    if (isLast && curG && l.mode === 'all') {
+      h += '<section class="gdone">';
+      h += '<span class="gdone-ic" aria-hidden="true">✓</span>';
+      h += '<h2 class="h2">' + (seenCount >= inRange.length ? 'Xong cụm ' + curG + '!' : 'Tới thẻ cuối cụm ' + curG) + '</h2>';
+      h += '<p class="small" style="margin:0;color:var(--ink-2)">Đã xem ' + seenCount + '/' + inRange.length + ' chữ' + (reviewCount ? '. Có ' + reviewCount + ' chữ đánh dấu "Còn ôn".' : '.') + '</p>';
+      h += '<div class="grid2" style="width:100%">';
+      h += reviewCount ? '<button class="btn star-btn" data-act="mode-review">Ôn ' + reviewCount + ' chữ khó</button>' : '<button class="btn" data-act="first">Học lại từ đầu</button>';
+      h += curG < nG ? '<button class="btn primary" data-act="pick-group" data-g="' + (curG + 1) + '" data-mode="all">Sang cụm ' + (curG + 1) + ' →</button>' : '<button class="btn primary" data-act="to-groups">Về bảng cụm</button>';
+      h += '</div>';
+      if (reviewCount) h += '<button class="linkbtn" data-act="first">Học lại cụm từ đầu</button>';
+      h += '</section>';
+    } else if (isLast) {
+      h += '<div class="endnote">Bạn đã tới thẻ cuối của phần này. <button data-act="first">Về thẻ đầu</button></div>';
+    }
+    h += '<div class="jump"><label for="jump" class="row" style="gap:6px">Tới thẻ số<input id="jump" type="number" inputmode="numeric" min="1" max="' + list.length + '" value="' + (pos + 1) + '"></label><span>/ ' + list.length + '</span><button class="btn" data-act="jump" style="min-height:38px">Đi</button></div>';
+    h += '<div class="grid2"><button class="btn" data-act="say-word" data-speak-key="word"' + (kanjiSpeech(info) ? '' : ' disabled') + '>' + ICON.sound + 'Nghe On · Kun</button><button class="btn" data-act="flip">' + ICON.flip + 'Lật thẻ</button></div>';
+
+    if (ui.flipped) {
+      h += '<section class="kanji"><h2 class="h2" style="font-size:15px">Từ vựng có chữ <span lang="ja">' + esc(w.w) + '</span></h2>';
+      h += famList(w.w, 12) + '</section>';
+    }
+    h += footer();
+    return h;
   }
 
   function toggleRow(id, opt, on, label) {
@@ -1042,7 +1233,7 @@
     try {
       if (ui.view !== 'profiles' && !profile()) ui.view = 'profiles';
       if ((ui.view === 'study' || ui.view === 'groups') && !words(state.level).list.length) ui.view = 'levels';
-      root.innerHTML = ui.view === 'profiles' ? viewProfiles() : ui.view === 'levels' ? viewLevels() : ui.view === 'groups' ? viewGroups() : viewStudy();
+      root.innerHTML = ui.view === 'profiles' ? viewProfiles() : ui.view === 'levels' ? viewLevels() : ui.view === 'groups' ? viewGroups() : (isKanji(state.level) ? viewKanjiStudy() : viewStudy());
       document.body.classList.toggle('has-nav', !!root.querySelector('.nav, .player'));
       document.body.classList.toggle('has-player', !!root.querySelector('.player'));
       markSpeaking();
@@ -1149,8 +1340,8 @@
       case 'to-levels': ui.view = 'levels'; ui.flipped = false; render(); return;
       case 'pick-level': {
         var code = t.getAttribute('data-level');
-        if (!words(code).list.length) { toast('Cấp độ ' + code + ' chưa có danh sách từ.'); return; }
-        state.level = code; resetList(); ui.flipped = false; save(); ui.view = 'groups'; render(); return;
+        if (!words(code).list.length) { toast(isKanji(code) ? 'Chưa tải được danh sách kanji.' : 'Cấp độ ' + code + ' chưa có danh sách từ.'); return; }
+        state.level = code; state.section = isKanji(code) ? 'kanji' : 'vocab'; resetList(); ui.flipped = false; save(); ui.view = 'groups'; render(); return;
       }
       case 'to-groups': ui.view = 'groups'; ui.flipped = false; render(); return;
       case 'to-study': ui.view = 'study'; ui.flipped = false; render(); return;
@@ -1200,7 +1391,28 @@
         if (ls.shuffle) ls.seed = (Date.now() % 2147483647) || 1;
         resetList(); ui.flipped = false; save(); render(true); toast(ls.shuffle ? 'Đã xáo trộn thứ tự thẻ.' : 'Đã trở về thứ tự gốc.'); return;
       }
-      case 'say-word': { var ww = currentWord(); if (ww) speak(ww.w, 'word'); return; }
+      case 'say-word': {
+        var ww = currentWord(); if (!ww) return;
+        if (isKanji(state.level)) { var ks = kanjiSpeech(kanjiInfo(ww.w)); if (ks) speak(ks, 'word', 'ja'); return; }
+        speak(ww.w, 'word'); return;
+      }
+      case 'section': state.section = t.getAttribute('data-v') === 'kanji' ? 'kanji' : 'vocab'; save(); render(true); return;
+      case 'kj-tip': if (!p) return; p.settings.kjTip = !p.settings.kjTip; save(); render(true); return;
+      case 'kj-fam': {
+        var fw = currentWord(), fk = t.getAttribute('data-k'); if (!fw || !fk) return;
+        ui.fam = ui.fam && ui.fam.id === fw.id && ui.fam.k === fk ? null : { id: fw.id, k: fk };
+        render(true); return;
+      }
+      case 'fam-go': {
+        if (!p) return;
+        var fc = t.getAttribute('data-code'), fid = parseInt(id, 10);
+        if (isKanji(fc) || !words(fc).map[fid]) return;
+        var fl = lvState(p, fc);
+        state.level = fc; state.section = 'vocab';
+        fl.group = groupOfId(fc, fid); fl.mode = 'all'; fl.cur = fid;
+        ui.fam = null; resetList(); ui.flipped = false; save(); ui.view = 'study'; render();
+        toast('Đã mở từ ' + words(fc).map[fid].w + ' (cụm ' + fl.group + ').'); return;
+      }
       case 'play-seq': startPlayer('seq'); return;
       case 'play-shuf': startPlayer('shuf'); return;
       case 'play-pause': if (player.paused) resumePlayer(); else pausePlayer(); return;

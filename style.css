@@ -385,3 +385,32 @@ body.typing .player { display: none; }
 .gdone .btn { min-height: 50px; font-weight: 700; }
 .btn.star-btn { background: var(--warn-bg); border-color: var(--warn-line); border-bottom-color: var(--warn-edge); color: var(--warn-ink); }
 @media (prefers-reduced-motion: reduce) { .gtile, .continue, .groupbar { transition: none; } }
+
+/* ---------- mục Kanji (v1.5) ---------- */
+.sections { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.section-btn { min-height: 64px; border-radius: 16px; border: 1px solid var(--line); border-bottom: 4px solid var(--edge); background: var(--surface); color: var(--ink-2); font-size: 15px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform 0.08s ease; }
+.section-btn span { font-family: var(--f-display); font-size: 18px; }
+.section-btn:active { transform: translateY(3px); border-bottom-width: 1px; }
+.section-btn.on { background: var(--accent); border-color: var(--accent); border-bottom-color: var(--accent-edge); color: var(--accent-ink); }
+.gtile-kj { font-family: var(--f-display); font-size: 17px; color: var(--ink-2); letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kjcard { min-height: 320px; }
+.kj-big { font-family: var(--f-display); font-size: 120px; font-weight: 700; line-height: 1; color: var(--accent); }
+.kj-mid { font-family: var(--f-display); font-size: 64px; font-weight: 700; line-height: 1; color: var(--ink); }
+.kj-hvbig { font-size: 26px; font-weight: 800; letter-spacing: 0.06em; color: var(--accent); }
+.kj-story { display: flex; flex-direction: column; gap: 4px; max-width: 34em; padding: 12px 14px; border-radius: 14px; background: var(--vi-bg); border: 1px solid var(--vi-line); font-size: 15px; line-height: 1.6; text-align: left; color: var(--ink); }
+.kj-story.muted { color: var(--muted); font-size: 13px; }
+.kj-read { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; font-size: 17px; }
+.kj-read .kj-line b { padding-top: 4px; }
+.tipbtn { width: 100%; min-height: 48px; font-weight: 700; }
+.tipbtn.on { background: var(--vi-bg); }
+button.kj-tap { border: 1px solid var(--line); border-bottom: 3px solid var(--edge); cursor: pointer; font-family: inherit; padding: 0; }
+button.kj-tap:active { transform: translateY(2px); border-bottom-width: 1px; }
+button.kj-tap.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.kj-fam { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 12px; background: var(--surface-2); }
+.fam { display: flex; flex-direction: column; gap: 6px; }
+.fam-item { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; column-gap: 10px; row-gap: 2px; align-items: baseline; padding: 10px 12px; min-height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.fam-item:active { transform: translateY(1px); }
+.fam-w { font-family: var(--f-jp); font-size: 17px; font-weight: 700; }
+.fam-r { font-family: var(--f-jp); font-size: 13px; color: var(--ink-2); min-width: 0; overflow-wrap: anywhere; }
+.fam-lv { font-size: 11px; font-weight: 700; color: var(--accent); }
+.fam-m { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
