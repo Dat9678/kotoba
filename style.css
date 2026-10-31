@@ -57,7 +57,9 @@
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+/* Chống phóng to khi chạm 2 lần nhanh (vẫn giữ phóng to bằng 2 ngón tay) */
+body, button, a, label, input, select, textarea { touch-action: manipulation; }
 body {
   margin: 0;
   background: var(--bg);
@@ -148,7 +150,7 @@ button { cursor: pointer; }
   min-height: 44px; padding: 8px 12px; border-radius: 10px;
   border: 1px solid var(--line); background: var(--bg); font-size: 16px; color: var(--ink);
 }
-.field textarea { min-height: 110px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; resize: vertical; word-break: break-all; }
+.field textarea { min-height: 110px; font-family: ui-monospace, Menlo, monospace; font-size: 16px; resize: vertical; word-break: break-all; }
 
 .bar { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
 .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.3s ease; }
@@ -253,6 +255,15 @@ body.typing .nav { display: none; }
 .pattern .jp { font-size: 16px; font-weight: 700; color: var(--accent-soft-ink); }
 :root:not([data-theme="dark"]) .pattern .jp { color: var(--accent); }
 .tip { padding: 14px 16px; border-radius: 16px; background: var(--vi-bg); border: 1px solid var(--vi-line); display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.65; }
+.kanji { padding: 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.kj-word { font-size: 14px; font-weight: 800; letter-spacing: 0.04em; color: var(--accent); text-align: right; }
+.kj-row { display: flex; gap: 12px; align-items: flex-start; padding-top: 10px; border-top: 1px dashed var(--line); }
+.kj-char { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; background: var(--surface-2); font-size: 30px; font-weight: 700; color: var(--ink); }
+.kj-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 14px; line-height: 1.5; }
+.kj-hv { font-weight: 800; letter-spacing: 0.04em; color: var(--ink); }
+.kj-line { display: flex; gap: 8px; color: var(--ink-2); overflow-wrap: anywhere; }
+.kj-line b { flex: none; width: 30px; font-size: 11px; letter-spacing: 0.06em; color: var(--muted); padding-top: 2px; }
+.kj-used { font-size: 12px; color: var(--accent); font-weight: 600; }
 .label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); }
 
 .ex { padding: 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
@@ -299,7 +310,7 @@ body.has-nav .toast { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
 .seg { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2); }
 .seg-btn { flex: 1; min-height: 42px; border: 0; border-radius: 10px; background: transparent; font-size: 14px; font-weight: 600; color: var(--ink-2); padding: 0 6px; }
 .seg-btn.on { background: var(--surface); color: var(--ink); font-weight: 700; box-shadow: 0 1px 0 var(--edge), 0 2px 6px rgba(31, 42, 36, 0.12); }
-.select { flex: 1; min-width: 0; min-height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 15px; }
+.select { flex: 1; min-width: 0; min-height: 44px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 16px; }
 
 .player {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;

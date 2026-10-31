@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '1.3';
+  var APP_VERSION = '1.4';
   var STORE_KEY = 'kotoba.studio.v1';
   var LEVELS = [
     { code: 'N3', title: 'JLPT N3 · Trung cấp', color: '#2E5B45' },
@@ -21,6 +21,7 @@
   /* ---------------- dữ liệu từ vựng ---------------- */
   var DATA = (window.KOTOBA_DATA && typeof window.KOTOBA_DATA === 'object') ? window.KOTOBA_DATA : {};
   var EXAMPLES = (window.KOTOBA_EXAMPLES && typeof window.KOTOBA_EXAMPLES === 'object') ? window.KOTOBA_EXAMPLES : {};
+  var KANJI = (window.KOTOBA_KANJI && typeof window.KOTOBA_KANJI === 'object' && window.KOTOBA_KANJI.k) ? window.KOTOBA_KANJI : null;
   var wordCache = {};
 
   function words(code) {
@@ -105,7 +106,7 @@
       var st = (p.settings && typeof p.settings === 'object') ? p.settings : {};
       var pl = (st.play && typeof st.play === 'object') ? st.play : {};
       np.settings = {
-        kanaCard: !!st.kanaCard, kanaEx: st.kanaEx !== false, vi: st.vi !== false,
+        kanaCard: !!st.kanaCard, kanaEx: st.kanaEx !== false, vi: st.vi !== false, kanji: !!st.kanji,
         rate: [0.7, 0.85, 1].indexOf(st.rate) >= 0 ? st.rate : 0.85,
         play: { content: ['word', 'meaning', 'full'].indexOf(pl.content) >= 0 ? pl.content : 'meaning', gap: [1, 2, 3, 4].indexOf(pl.gap) >= 0 ? pl.gap : 4 }
       };
@@ -878,9 +879,13 @@
     }
     h += '<div class="jump"><label for="jump" class="row" style="gap:6px">Tới thẻ số<input id="jump" type="number" inputmode="numeric" min="1" max="' + list.length + '" value="' + (pos + 1) + '"></label><span>/ ' + list.length + '</span><button class="btn" data-act="jump" style="min-height:38px">Đi</button></div>';
 
-    h += '<div class="toggles">' + toggleRow('opt-kanacard', 'kanaCard', st.kanaCard, 'Hiện hiragana trên flashcard') + '</div>';
+    h += '<div class="toggles">' + toggleRow('opt-kanacard', 'kanaCard', st.kanaCard, 'Hiện hiragana trên flashcard');
+    if (KANJI) h += toggleRow('opt-kanji', 'kanji', st.kanji, 'Hiện âm Hán Việt · On · Kun');
+    h += '</div>';
     h += '<div class="grid2"><button class="btn" data-act="say-word" data-speak-key="word">' + ICON.sound + 'Nghe từ</button><button class="btn" data-act="flip">' + ICON.flip + 'Lật thẻ</button></div>';
     h += playBox(p, list.length);
+
+    if (ui.flipped && st.kanji) h += kanjiBox(code, w);
 
     if (ui.flipped && e) {
       if (Array.isArray(e.p) && e.p.length) {
@@ -982,6 +987,37 @@
     h += '<button class="btn" data-act="play-skip"' + (player.idx >= n - 1 ? ' disabled' : '') + '>Bỏ qua' + ICON.skip + '</button>';
     h += '</div></div>';
     return h;
+  }
+
+  /* Khối "Phân tích kanji" ở mặt sau: Hán Việt cả từ + On/Kun từng chữ. Thiếu dữ liệu thì không hiện. */
+  function kanjiBox(code, w) {
+    try {
+      if (!KANJI || !w) return '';
+      var info = KANJI.w && KANJI.w[code] ? KANJI.w[code][w.id] : null;
+      var used = {};
+      if (info && Array.isArray(info.u)) info.u.forEach(function (x) { if (Array.isArray(x) && !used[x[0]]) used[x[0]] = x; });
+      var seen = {}, rows = '', prev = '';
+      String(w.w).split('').forEach(function (c) {
+        var k = c === '々' ? prev : c;
+        prev = k;
+        var d = KANJI.k[k];
+        if (!d || seen[k]) return;
+        seen[k] = 1;
+        var u = used[k] || used[c];
+        rows += '<div class="kj-row"><span class="kj-char" lang="ja">' + esc(k) + '</span><span class="kj-info">';
+        rows += '<span class="kj-hv">' + esc(d.h || '—') + (d.h ? '' : ' <span class="small muted">(chữ do Nhật tạo)</span>') + '</span>';
+        rows += '<span class="kj-line"><b>On</b><span lang="ja">' + esc(d.on || '—') + '</span></span>';
+        rows += '<span class="kj-line"><b>Kun</b><span lang="ja">' + esc(d.kun || '—') + '</span></span>';
+        if (u) rows += '<span class="kj-used">Trong từ này đọc <span lang="ja">' + esc(u[1]) + '</span> · âm ' + (u[2] === 'on' ? 'On' : 'Kun') + '</span>';
+        rows += '</span></div>';
+      });
+      if (!rows) return '';
+      var h = '<section class="kanji"><div class="row between" style="align-items:baseline"><h2 class="h2" style="font-size:15px">Phân tích kanji</h2>';
+      if (info && info.hv) h += '<span class="kj-word">' + esc(info.hv) + '</span>';
+      h += '</div>';
+      if (info && info.sp) h += '<div class="small muted">Từ này có cách đọc đặc biệt, không ghép theo từng chữ.</div>';
+      return h + rows + '</section>';
+    } catch (err) { return ''; }
   }
 
   function toggleRow(id, opt, on, label) {
