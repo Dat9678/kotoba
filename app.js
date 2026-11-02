@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '1.5';
+  var APP_VERSION = '1.6';
   var STORE_KEY = 'kotoba.studio.v1';
   var LEVELS = [
     { code: 'N3', title: 'JLPT N3 · Trung cấp', color: '#2E5B45' },
@@ -521,7 +521,7 @@
       if (pl.content === 'full') {
         var e = exampleFor(state.level, w.id);
         if (e && Array.isArray(e.ex)) {
-          e.ex.forEach(function (x) {
+          e.ex.slice(0, 3).forEach(function (x) { /* nghe liên tục: chỉ đọc 3 ví dụ đầu */
             if (Array.isArray(x) && x[1]) { items.push({ wait: 700 }); items.push({ text: x[1], lang: 'ja' }); }
           });
         }
@@ -898,6 +898,7 @@
       h += '<button class="btn primary" data-act="next"' + (isLast ? ' disabled' : '') + '>Tiếp' + ICON.right + '</button>';
       h += '</nav>';
     }
+    if (ui.flipped && st.kanji) h += kanjiBox(code, w);
     if (isLast && curG && l.mode === 'all') {
       h += '<section class="gdone">';
       h += '<span class="gdone-ic" aria-hidden="true">✓</span>';
@@ -912,15 +913,18 @@
     } else if (isLast) {
       h += '<div class="endnote">Bạn đã tới thẻ cuối của phần này. <button data-act="first">Về thẻ đầu</button></div>';
     }
-    h += '<div class="jump"><label for="jump" class="row" style="gap:6px">Tới thẻ số<input id="jump" type="number" inputmode="numeric" min="1" max="' + list.length + '" value="' + (pos + 1) + '"></label><span>/ ' + list.length + '</span><button class="btn" data-act="jump" style="min-height:38px">Đi</button></div>';
+    h += '<div class="jump"><label for="jump" class="row" style="gap:6px">Tới thẻ số<input id="jump" type="number" inputmode="numeric" min="1" max="' + list.length + '" value="' + (pos + 1) + '"></label><span>/ ' + list.length + '</span><button class="btn" data-act="jump" style="min-height:38px">Đi</button><button class="btn" data-act="first" style="min-height:38px"' + (isFirst ? ' disabled' : '') + '>Về thẻ 1</button></div>';
 
-    h += '<div class="toggles">' + toggleRow('opt-kanacard', 'kanaCard', st.kanaCard, 'Hiện hiragana trên flashcard');
-    if (KANJI) h += toggleRow('opt-kanji', 'kanji', st.kanji, 'Hiện âm Hán Việt · On · Kun');
-    h += '</div>';
-    h += '<div class="grid2"><button class="btn" data-act="say-word" data-speak-key="word">' + ICON.sound + 'Nghe từ</button><button class="btn" data-act="flip">' + ICON.flip + 'Lật thẻ</button></div>';
-    h += playBox(p, list.length);
-
-    if (ui.flipped && st.kanji) h += kanjiBox(code, w);
+    /* 4 khối cài đặt & nghe: đặt xuống dưới cùng (sau phần ví dụ) */
+    var cfg = '<div class="toggles">' + toggleRow('opt-kanacard', 'kanaCard', st.kanaCard, 'Hiện hiragana trên flashcard');
+    if (KANJI) cfg += toggleRow('opt-kanji', 'kanji', st.kanji, 'Hiện âm Hán Việt · On · Kun');
+    cfg += '</div>';
+    cfg += '<div class="grid2"><button class="btn" data-act="say-word" data-speak-key="word">' + ICON.sound + 'Nghe từ</button><button class="btn" data-act="flip">' + ICON.flip + 'Lật thẻ</button></div>';
+    cfg += playBox(p, list.length);
+    cfg += '<div class="toggles">';
+    cfg += toggleRow('opt-kanaex', 'kanaEx', st.kanaEx, 'Hiện hiragana trong ví dụ');
+    cfg += toggleRow('opt-vi', 'vi', st.vi, 'Hiện bản dịch tiếng Việt');
+    cfg += '</div>';
 
     if (ui.flipped && e) {
       if (Array.isArray(e.p) && e.p.length) {
@@ -933,11 +937,6 @@
       }
       if (e.tip) h += '<section class="tip"><span class="label">MẸO ĐỜI SỐNG</span><span>' + esc(e.tip) + '</span></section>';
     }
-
-    h += '<div class="toggles">';
-    h += toggleRow('opt-kanaex', 'kanaEx', st.kanaEx, 'Hiện hiragana trong ví dụ');
-    h += toggleRow('opt-vi', 'vi', st.vi, 'Hiện bản dịch tiếng Việt');
-    h += '</div>';
 
     h += '<section style="display:flex;flex-direction:column;gap:12px">';
     var exs = e && Array.isArray(e.ex) ? e.ex.filter(Array.isArray) : [];
@@ -956,6 +955,7 @@
       });
     }
     h += '</section>';
+    h += cfg;
     h += footer();
     return h;
   }
@@ -1200,7 +1200,7 @@
     } else if (isLast) {
       h += '<div class="endnote">Bạn đã tới thẻ cuối của phần này. <button data-act="first">Về thẻ đầu</button></div>';
     }
-    h += '<div class="jump"><label for="jump" class="row" style="gap:6px">Tới thẻ số<input id="jump" type="number" inputmode="numeric" min="1" max="' + list.length + '" value="' + (pos + 1) + '"></label><span>/ ' + list.length + '</span><button class="btn" data-act="jump" style="min-height:38px">Đi</button></div>';
+    h += '<div class="jump"><label for="jump" class="row" style="gap:6px">Tới thẻ số<input id="jump" type="number" inputmode="numeric" min="1" max="' + list.length + '" value="' + (pos + 1) + '"></label><span>/ ' + list.length + '</span><button class="btn" data-act="jump" style="min-height:38px">Đi</button><button class="btn" data-act="first" style="min-height:38px"' + (isFirst ? ' disabled' : '') + '>Về thẻ 1</button></div>';
     h += '<div class="grid2"><button class="btn" data-act="say-word" data-speak-key="word"' + (kanjiSpeech(info) ? '' : ' disabled') + '>' + ICON.sound + 'Nghe On · Kun</button><button class="btn" data-act="flip">' + ICON.flip + 'Lật thẻ</button></div>';
 
     if (ui.flipped) {
