@@ -1,8 +1,8 @@
 /* Kotoba Studio - cho phep dung khi khong co mang.
    Uu tien tai ban moi tu mang; chi khi mat mang moi dung ban da luu,
    nen cap nhat moi luon den ngay va khong bi ket ban cu. */
-var CACHE = 'kotoba-202611021143';
-var FILES = ['./', './index.html', './app.js', './style.css', './data/n3.js', './data/kanji.js', './data/n3-examples.js', './data/n3-ex-02.js', './data/n3-ex-03.js', './data/n3-ex-04.js', './data/n3-ex-05.js', './data/n3-ex-06.js', './data/n3-ex-07.js', './data/n3-ex-08.js', './data/n3-ex-09.js', './data/n3-ex-10.js', './data/n3-ex-11.js', './data/n3-ex5-01.js', './data/n2.js', './data/n1.js', './data/kanji-list.js', './data/kj-01.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+var CACHE = 'kotoba-202611022237';
+var FILES = ['./', './index.html', './app.js', './style.css', './data/n3.js', './data/kanji.js', './data/n3-examples.js', './data/n3-ex-02.js', './data/n3-ex-03.js', './data/n3-ex-04.js', './data/n3-ex-05.js', './data/n3-ex-06.js', './data/n3-ex-07.js', './data/n3-ex-08.js', './data/n3-ex-09.js', './data/n3-ex-10.js', './data/n3-ex-11.js', './data/n3-ex5-01.js', './data/n3-ex5-02.js', './data/n2.js', './data/n1.js', './data/kanji-list.js', './data/kj-01.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).catch(function () {}));

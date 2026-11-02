@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '1.6';
+  var APP_VERSION = '1.7';
   var STORE_KEY = 'kotoba.studio.v1';
   var LEVELS = [
     { code: 'N3', title: 'JLPT N3 · Trung cấp', color: '#2E5B45' },
@@ -850,7 +850,6 @@
     h += '<span class="groupbar-k">' + code + ' · ' + (curG ? 'CỤM ' + curG + ' / ' + nG : 'CẢ ' + d.list.length + ' TỪ') + '</span>';
     h += '<span class="groupbar-t">' + (curG ? 'Từ ' + groupLabel(code, curG) + ' · ' : '') + 'đã học ' + seenCount + '/' + inRange.length + ' · ★ ' + reviewCount + '</span></span>';
     h += '<span class="groupbar-a">Đổi cụm ›</span></button>';
-    h += '<div class="note">Nghĩa của các từ đang là <strong>bản nháp</strong>, chưa kiểm chứng đầy đủ. Hiện có ' + exampleCount(code) + ' từ có ví dụ đời sống; các từ còn lại sẽ được bổ sung theo đợt.</div>';
     h += '<div class="bar" aria-hidden="true"><i style="width:' + (inRange.length ? Math.round(seenCount / inRange.length * 100) : 0) + '%"></i></div>';
 
     h += '<div class="modes" role="group" aria-label="Chế độ học">';
@@ -878,7 +877,6 @@
       h += '<span class="side-tag">MẶT TRƯỚC · TỪ VỰNG</span>';
       h += '<span class="word" lang="ja" style="font-size:' + wordSize(w.w) + 'px">' + esc(w.w) + '</span>';
       if (st.kanaCard && !sameReading) h += '<span class="reading" lang="ja">' + esc(w.r) + '</span>';
-      h += '<span class="status' + (verified ? ' ok' : '') + '">' + (verified ? 'Nghĩa đã kiểm chứng' : 'Nghĩa: bản nháp') + '</span>';
       h += '<span class="hint">Chạm để lật · Vuốt trái/phải để đổi từ</span>';
     } else {
       h += '<span class="side-tag">MẶT SAU · NGHĨA</span>';
