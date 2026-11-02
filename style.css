@@ -414,3 +414,34 @@ button.kj-tap.on { background: var(--accent); color: var(--accent-ink); border-c
 .fam-r { font-family: var(--f-jp); font-size: 13px; color: var(--ink-2); min-width: 0; overflow-wrap: anywhere; }
 .fam-lv { font-size: 11px; font-weight: 700; color: var(--accent); }
 .fam-m { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
+
+/* ---------- v1.8: hàng chế độ 2×2, nút Nghe dưới thẻ, dải thu gọn ---------- */
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.modes .mode { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0 8px; text-align: center; line-height: 1.2; }
+.modes .mode.star { background: var(--warn-bg); border-color: var(--warn-line); border-bottom-color: var(--warn-edge); color: var(--warn-ink); font-weight: 600; }
+.modes .mode.star.on { background: var(--star); border-color: var(--star); border-bottom-color: var(--warn-edge); color: var(--surface); }
+.modes .mode svg { flex-shrink: 0; }
+.btn.sayrow { width: 100%; min-height: 52px; font-size: 16px; font-weight: 600; }
+.minibar {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 16;
+  display: block; width: 100%; margin: 0; border: 0; border-bottom: 1px solid var(--line);
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 0 8px;
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: 0 6px 18px rgba(31, 42, 36, 0.08);
+  text-align: left; color: var(--ink);
+  transform: translateY(-110%); visibility: hidden;
+  transition: transform 0.18s ease, visibility 0s linear 0.18s;
+}
+.minibar.show { transform: translateY(0); visibility: visible; transition: transform 0.18s ease, visibility 0s; }
+.minibar-in {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  max-width: 480px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.minibar-t { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.minibar-r { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.minibar .pill { font-size: 13px; }
+.minibar-a { font-weight: 700; font-size: 14px; color: var(--accent); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .minibar, .minibar.show { transition: none; } }
