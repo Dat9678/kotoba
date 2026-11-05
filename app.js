@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '1.8';
+  var APP_VERSION = '1.9';
   var STORE_KEY = 'kotoba.studio.v1';
   var LEVELS = [
     { code: 'N3', title: 'JLPT N3 · Trung cấp', color: '#2E5B45' },
@@ -887,7 +887,7 @@
     if (player.on) {
       h += playerBar();
     } else {
-      h += '<button class="btn sayrow" data-act="say-word" data-speak-key="word">' + ICON.sound + 'Nghe từ này</button>';
+      h += '<div class="sayrow-wrap"><button class="btn pcnav" data-act="prev"' + (isFirst ? ' disabled' : '') + ' aria-label="Thẻ trước">' + ICON.left + 'Trước</button>' + '<button class="btn sayrow" data-act="say-word" data-speak-key="word">' + ICON.sound + 'Nghe từ này</button>' + '<button class="btn primary pcnav" data-act="next"' + (isLast ? ' disabled' : '') + ' aria-label="Thẻ sau">Tiếp' + ICON.right + '</button></div>';
     }
     if (ui.flipped && st.kanji) h += kanjiBox(code, w);
     if (isLast && curG && l.mode === 'all') {
@@ -1169,7 +1169,7 @@
     h += '</button>';
     h += '<button class="btn tipbtn' + (st.kjTip ? ' on' : '') + '" data-act="kj-tip" aria-pressed="' + !!st.kjTip + '">' + (st.kjTip ? 'Ẩn mẹo' : 'Hiện mẹo') + '</button>';
 
-    h += '<button class="btn sayrow" data-act="say-word" data-speak-key="word"' + (kanjiSpeech(info) ? '' : ' disabled') + '>' + ICON.sound + 'Nghe On · Kun</button>';
+    h += '<div class="sayrow-wrap"><button class="btn pcnav" data-act="prev"' + (isFirst ? ' disabled' : '') + ' aria-label="Thẻ trước">' + ICON.left + 'Trước</button>' + '<button class="btn sayrow" data-act="say-word" data-speak-key="word"' + (kanjiSpeech(info) ? '' : ' disabled') + '>' + ICON.sound + 'Nghe On · Kun</button>' + '<button class="btn primary pcnav" data-act="next"' + (isLast ? ' disabled' : '') + ' aria-label="Thẻ sau">Tiếp' + ICON.right + '</button></div>';
     if (isLast && curG && l.mode === 'all') {
       h += '<section class="gdone">';
       h += '<span class="gdone-ic" aria-hidden="true">✓</span>';

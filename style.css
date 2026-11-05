@@ -445,3 +445,11 @@ button.kj-tap.on { background: var(--accent); color: var(--accent-ink); border-c
 .minibar .pill { font-size: 13px; }
 .minibar-a { font-weight: 700; font-size: 14px; color: var(--accent); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .minibar, .minibar.show { transition: none; } }
+
+/* ---------- v1.9: nút Trước/Tiếp chỉ hiện trên máy dùng chuột (PC) ---------- */
+.sayrow-wrap { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.sayrow-wrap .pcnav { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .sayrow-wrap { grid-template-columns: 1fr 1.4fr 1fr; }
+  .sayrow-wrap .pcnav { display: inline-flex; min-height: 52px; }
+}
