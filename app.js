@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '2.0';
+  var APP_VERSION = '2.1';
   var STORE_KEY = 'kotoba.studio.v1';
   var LEVELS = [
     { code: 'N3', title: 'JLPT N3 · Trung cấp', color: '#2E5B45' },
@@ -115,7 +115,7 @@
           to: typeof l.to === 'number' ? l.to : null,
           group: typeof l.group === 'number' && l.group >= 0 ? Math.floor(l.group) : 0,
           assign: (l.assign && typeof l.assign.from === 'number' && typeof l.assign.to === 'number') ? { from: Math.floor(l.assign.from), to: Math.floor(l.assign.to) } : null,
-          mode: l.mode === 'review' ? 'review' : 'all',
+          mode: l.mode === 'review' || l.mode === 'reviewAll' ? l.mode : 'all',
           shuffle: !!l.shuffle,
           seed: typeof l.seed === 'number' ? l.seed : 1
         };
@@ -238,6 +238,7 @@
     return l && l.group >= 1 && l.group <= n ? l.group : 0;
   }
   function scopeIds(code, l) {
+    if (l && l.mode === 'reviewAll') return words(code).list.map(function (w) { return w.id; });
     var k = currentGroup(code, l);
     if (k) return groupsOf(code)[k - 1].slice();
     return words(code).list.map(function (w) { return w.id; });
@@ -259,7 +260,7 @@
     var key = [p.id, code, l.mode, l.shuffle, l.seed, currentGroup(code, l)].join('|');
     if (ui.list && ui.listKey === key) return ui.list;
     var ids = scopeIds(code, l);
-    if (l.mode === 'review') {
+    if (l.mode === 'review' || l.mode === 'reviewAll') {
       var rv = {};
       l.review.forEach(function (id) { rv[id] = 1; });
       ids = ids.filter(function (id) { return rv[id]; });
@@ -612,7 +613,7 @@
     var h = '';
     h += '<header class="row center" style="flex-direction:column;gap:6px">';
     h += '<div class="eyebrow">日本語をもっと楽しく · JAPANESE EVERY DAY</div>';
-    h += '<h1 class="brand">Kotoba <span class="spark">✦</span> Studio</h1>';
+    h += '<h1 class="brand">Kotoba <span class="spark">✦</span></h1>';
     h += '<p class="h2" style="margin-top:4px">Ai đang học hôm nay?</p>';
     h += '<p class="small muted" style="margin:0">Mỗi người có tiến độ và danh sách "Còn ôn" riêng.</p>';
     h += '</header>';
@@ -834,10 +835,11 @@
     var st = p.settings;
 
     var h = '';
-    h += miniBar(code + ' · ' + (curG ? 'Cụm ' + curG : 'Cả ' + d.list.length + ' từ') + ' · ★ ' + reviewCount, list.length ? (pos + 1) + ' / ' + list.length : '0 / 0');
+    var rAll = l.mode === 'reviewAll';
+    h += miniBar(code + ' · ' + (rAll ? 'Ôn tất cả' : curG ? 'Cụm ' + curG : 'Cả ' + d.list.length + ' từ') + ' · ★ ' + reviewCount, list.length ? (pos + 1) + ' / ' + list.length : '0 / 0');
     h += '<header style="display:flex;flex-direction:column;gap:6px">';
     h += '<div class="eyebrow">日本語をもっと楽しく · JAPANESE EVERY DAY</div>';
-    h += '<div class="row between"><div class="row" style="align-items:baseline;gap:6px"><h1 class="brand">Kotoba <span class="spark">✦</span> Studio</h1><span class="small muted" style="font-weight:600">v' + APP_VERSION + '</span></div>';
+    h += '<div class="row between"><div class="row" style="align-items:baseline;gap:6px"><h1 class="brand">Kotoba <span class="spark">✦</span></h1><span class="small muted" style="font-weight:600">v' + APP_VERSION + '</span></div>';
     h += '<span class="pill" aria-label="Thẻ hiện tại">' + (list.length ? (pos + 1) + ' / ' + list.length : '0 / 0') + '</span></div>';
     h += '<div class="byline">Created by <span class="sig">' + AUTHOR + '<svg class="sig-line" width="150" height="10" viewBox="0 0 150 10" aria-hidden="true"><path d="M2 7 C 30 1, 60 10, 95 5 S 140 3, 148 6"/></svg></span></div>';
     h += '</header>';
@@ -849,18 +851,23 @@
 
     h += '<div class="gb-row"><button class="groupbar" data-act="to-groups">';
     h += '<span style="display:flex;flex-direction:column;gap:2px;min-width:0">';
+    if (rAll) {
+      h += '<span class="groupbar-k">' + code + ' · ÔN TẤT CẢ · ' + reviewCount + ' TỪ</span>';
+      h += '<span class="groupbar-t"><span class="nw">Từ đã lưu ở mọi cụm ·</span> <span class="nw">thẻ ' + (list.length ? pos + 1 : 0) + '/' + list.length + '</span></span></span>';
+    } else {
     h += '<span class="groupbar-k">' + code + ' · ' + (curG ? 'CỤM ' + curG + ' / ' + nG : 'CẢ ' + d.list.length + ' TỪ') + '</span>';
     h += '<span class="groupbar-t">' + (curG ? '<span class="nw">Từ ' + groupLabel(code, curG) + ' ·</span> ' : '') + '<span class="nw">đã học ' + seenCount + '/' + inRange.length + ' · ★ ' + reviewCount + '</span></span></span>';
+    }
     h += '<span class="groupbar-a">Đổi cụm ›</span></button><button class="srch-btn" data-act="search-open" aria-label="Tìm từ và kanji">' + ICON.search + '</button></div>';
     h += '<div class="bar" aria-hidden="true"><i style="width:' + (inRange.length ? Math.round(seenCount / inRange.length * 100) : 0) + '%"></i></div>';
 
-    h += modesGrid(l, reviewCount, w);
+    h += modesGrid(l, reviewCounts(code, l), w);
 
     if (!w) {
-      h += '<div class="empty">' + (l.mode === 'review'
+      h += '<div class="empty">' + (l.mode !== 'all'
         ? 'Chưa có thẻ nào được đánh dấu "Còn ôn" trong phần học này. Khi học, bấm ☆ Còn ôn ở những từ chưa thuộc.'
         : 'Phần học này chưa có từ nào.') + '</div>';
-      if (l.mode === 'review') h += '<button class="btn primary" data-act="mode-all">Quay lại học tất cả</button>';
+      if (l.mode !== 'all') h += '<button class="btn primary" data-act="mode-all">Quay lại học tất cả</button>';
       h += footer();
       return h;
     }
@@ -1112,10 +1119,11 @@
     var info = w ? kanjiInfo(w.w) : null;
 
     var h = '';
-    h += miniBar('Kanji ' + L.short + ' · ' + (curG ? 'Cụm ' + curG : 'Cả ' + d.list.length + ' chữ') + ' · ★ ' + reviewCount, list.length ? (pos + 1) + ' / ' + list.length : '0 / 0');
+    var rAll = l.mode === 'reviewAll';
+    h += miniBar('Kanji ' + L.short + ' · ' + (rAll ? 'Ôn tất cả' : curG ? 'Cụm ' + curG : 'Cả ' + d.list.length + ' chữ') + ' · ★ ' + reviewCount, list.length ? (pos + 1) + ' / ' + list.length : '0 / 0');
     h += '<header style="display:flex;flex-direction:column;gap:6px">';
     h += '<div class="eyebrow">日本語をもっと楽しく · KANJI EVERY DAY</div>';
-    h += '<div class="row between"><div class="row" style="align-items:baseline;gap:6px"><h1 class="brand">Kotoba <span class="spark">✦</span> Studio</h1><span class="small muted" style="font-weight:600">v' + APP_VERSION + '</span></div>';
+    h += '<div class="row between"><div class="row" style="align-items:baseline;gap:6px"><h1 class="brand">Kotoba <span class="spark">✦</span></h1><span class="small muted" style="font-weight:600">v' + APP_VERSION + '</span></div>';
     h += '<span class="pill" aria-label="Thẻ hiện tại">' + (list.length ? (pos + 1) + ' / ' + list.length : '0 / 0') + '</span></div>';
     h += '<div class="byline">Created by <span class="sig">' + AUTHOR + '<svg class="sig-line" width="150" height="10" viewBox="0 0 150 10" aria-hidden="true"><path d="M2 7 C 30 1, 60 10, 95 5 S 140 3, 148 6"/></svg></span></div>';
     h += '</header>';
@@ -1127,18 +1135,23 @@
 
     h += '<div class="gb-row"><button class="groupbar" data-act="to-groups">';
     h += '<span style="display:flex;flex-direction:column;gap:2px;min-width:0">';
+    if (rAll) {
+      h += '<span class="groupbar-k">KANJI ' + esc(L.short) + ' · ÔN TẤT CẢ · ' + reviewCount + ' CHỮ</span>';
+      h += '<span class="groupbar-t"><span class="nw">Chữ đã lưu ở mọi cụm ·</span> <span class="nw">thẻ ' + (list.length ? pos + 1 : 0) + '/' + list.length + '</span></span></span>';
+    } else {
     h += '<span class="groupbar-k">KANJI ' + esc(L.short) + ' · ' + (curG ? 'CỤM ' + curG + ' / ' + nG : 'CẢ ' + d.list.length + ' CHỮ') + '</span>';
     h += '<span class="groupbar-t">' + (curG ? '<span class="nw">Chữ ' + groupLabel(code, curG) + ' ·</span> ' : '') + '<span class="nw">đã học ' + seenCount + '/' + inRange.length + ' · ★ ' + reviewCount + '</span></span></span>';
+    }
     h += '<span class="groupbar-a">Đổi cụm ›</span></button><button class="srch-btn" data-act="search-open" aria-label="Tìm từ và kanji">' + ICON.search + '</button></div>';
     h += '<div class="bar" aria-hidden="true"><i style="width:' + (inRange.length ? Math.round(seenCount / inRange.length * 100) : 0) + '%"></i></div>';
 
-    h += modesGrid(l, reviewCount, w);
+    h += modesGrid(l, reviewCounts(code, l), w);
 
     if (!w) {
-      h += '<div class="empty">' + (l.mode === 'review'
+      h += '<div class="empty">' + (l.mode !== 'all'
         ? 'Chưa có chữ nào được đánh dấu "Còn ôn" trong phần học này. Khi học, bấm ☆ Còn ôn ở những chữ chưa thuộc.'
         : 'Phần học này chưa có chữ nào.') + '</div>';
-      if (l.mode === 'review') h += '<button class="btn primary" data-act="mode-all">Quay lại học tất cả</button>';
+      if (l.mode !== 'all') h += '<button class="btn primary" data-act="mode-all">Quay lại học tất cả</button>';
       h += footer();
       return h;
     }
@@ -1200,13 +1213,19 @@
   function miniBar(left, pill) {
     return '<div class="minibar" id="minibar" aria-hidden="true"><div class="minibar-in"><button class="minibar-main" data-act="to-groups"><span class="minibar-t">' + esc(left) + '</span><span class="minibar-r"><span class="pill">' + esc(pill) + '</span><span class="minibar-a">Đổi cụm ›</span></span></button><button class="srch-btn sm" data-act="search-open" aria-label="Tìm từ và kanji">' + ICON.search + '</button></div></div>';
   }
-  function modesGrid(l, reviewCount, w) {
+  function reviewCounts(code, l) {
+    var all = words(code).list.map(function (x) { return x.id; });
+    var k = currentGroup(code, l);
+    return { group: countIn(l.review, k ? groupsOf(code)[k - 1] : all), total: countIn(l.review, all) };
+  }
+  function modesGrid(l, rc, w) {
     var inReview = w ? l.review.indexOf(w.id) >= 0 : false;
     var h = '<div class="modes" role="group" aria-label="Chế độ học">';
     h += '<button class="mode' + (l.mode === 'all' ? ' on' : '') + '" data-act="mode-all" aria-pressed="' + (l.mode === 'all') + '">Học tất cả</button>';
     h += '<button class="mode' + (l.shuffle ? ' on' : '') + '" data-act="shuffle" aria-pressed="' + l.shuffle + '">Xáo trộn</button>';
-    h += '<button class="mode' + (l.mode === 'review' ? ' on' : '') + '" data-act="mode-review" aria-pressed="' + (l.mode === 'review') + '">Chỉ ôn "Còn ôn" (' + reviewCount + ')</button>';
-    if (w) h += '<button class="mode star' + (inReview ? ' on' : '') + '" data-act="toggle-review" aria-pressed="' + inReview + '">' + (inReview ? ICON.starOn + 'Đã đánh dấu' : ICON.star + 'Còn ôn') + '</button>';
+    h += '<button class="mode' + (l.mode === 'review' ? ' on' : '') + '" data-act="mode-review" aria-pressed="' + (l.mode === 'review') + '">Ôn cụm này (' + rc.group + ')</button>';
+    h += '<button class="mode' + (l.mode === 'reviewAll' ? ' on' : '') + '" data-act="mode-review-all" aria-pressed="' + (l.mode === 'reviewAll') + '">Ôn tất cả (' + rc.total + ')</button>';
+    if (w) h += '<button class="mode star wide' + (inReview ? ' on' : '') + '" data-act="toggle-review" aria-pressed="' + inReview + '">' + (inReview ? ICON.starOn + 'Đã lưu để ôn' : ICON.star + 'Lưu để ôn lại') + '</button>';
     return h + '</div>';
   }
   function updateMiniBar() {
@@ -1359,6 +1378,7 @@
         var gl = lvState(p, state.level), gk = parseInt(t.getAttribute('data-g'), 10) || 0;
         var gn = groupsOf(state.level).length;
         gl.group = gk >= 1 && gk <= gn ? gk : 0;
+        if (gl.mode === 'reviewAll') gl.mode = 'all';
         if (t.getAttribute('data-mode') === 'all') gl.mode = 'all';
         var gscope = scopeIds(state.level, gl);
         if (gscope.indexOf(gl.cur) < 0) {
@@ -1391,8 +1411,8 @@
         else { lr.review.push(w.id); toast('Đã thêm vào danh sách "Còn ôn".'); }
         save(); render(true); return;
       }
-      case 'mode-all': case 'mode-review': {
-        var lm = lvState(p, state.level); lm.mode = act === 'mode-all' ? 'all' : 'review';
+      case 'mode-all': case 'mode-review': case 'mode-review-all': {
+        var lm = lvState(p, state.level); lm.mode = act === 'mode-all' ? 'all' : act === 'mode-review-all' ? 'reviewAll' : 'review';
         resetList(); ui.flipped = false; save(); render(true); return;
       }
       case 'shuffle': {
