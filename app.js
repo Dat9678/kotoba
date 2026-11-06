@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '1.9';
+  var APP_VERSION = '2.0';
   var STORE_KEY = 'kotoba.studio.v1';
   var LEVELS = [
     { code: 'N3', title: 'JLPT N3 · Trung cấp', color: '#2E5B45' },
@@ -301,6 +301,7 @@
   }
 
   var ICON = {
+    search: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>',
     sound: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>',
     flip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>',
     left: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
@@ -846,11 +847,11 @@
     h += '<button class="btn" data-act="to-levels" style="min-height:40px;border-radius:999px">' + esc(L.title.split(' · ')[0]) + ' ' + ICON.chev + '</button>';
     h += '</div>';
 
-    h += '<button class="groupbar" data-act="to-groups">';
+    h += '<div class="gb-row"><button class="groupbar" data-act="to-groups">';
     h += '<span style="display:flex;flex-direction:column;gap:2px;min-width:0">';
     h += '<span class="groupbar-k">' + code + ' · ' + (curG ? 'CỤM ' + curG + ' / ' + nG : 'CẢ ' + d.list.length + ' TỪ') + '</span>';
-    h += '<span class="groupbar-t">' + (curG ? 'Từ ' + groupLabel(code, curG) + ' · ' : '') + 'đã học ' + seenCount + '/' + inRange.length + ' · ★ ' + reviewCount + '</span></span>';
-    h += '<span class="groupbar-a">Đổi cụm ›</span></button>';
+    h += '<span class="groupbar-t">' + (curG ? '<span class="nw">Từ ' + groupLabel(code, curG) + ' ·</span> ' : '') + '<span class="nw">đã học ' + seenCount + '/' + inRange.length + ' · ★ ' + reviewCount + '</span></span></span>';
+    h += '<span class="groupbar-a">Đổi cụm ›</span></button><button class="srch-btn" data-act="search-open" aria-label="Tìm từ và kanji">' + ICON.search + '</button></div>';
     h += '<div class="bar" aria-hidden="true"><i style="width:' + (inRange.length ? Math.round(seenCount / inRange.length * 100) : 0) + '%"></i></div>';
 
     h += modesGrid(l, reviewCount, w);
@@ -1124,11 +1125,11 @@
     h += '<button class="btn" data-act="to-levels" style="min-height:40px;border-radius:999px">Kanji ' + esc(L.short) + ' ' + ICON.chev + '</button>';
     h += '</div>';
 
-    h += '<button class="groupbar" data-act="to-groups">';
+    h += '<div class="gb-row"><button class="groupbar" data-act="to-groups">';
     h += '<span style="display:flex;flex-direction:column;gap:2px;min-width:0">';
     h += '<span class="groupbar-k">KANJI ' + esc(L.short) + ' · ' + (curG ? 'CỤM ' + curG + ' / ' + nG : 'CẢ ' + d.list.length + ' CHỮ') + '</span>';
-    h += '<span class="groupbar-t">' + (curG ? 'Chữ ' + groupLabel(code, curG) + ' · ' : '') + 'đã học ' + seenCount + '/' + inRange.length + ' · ★ ' + reviewCount + '</span></span>';
-    h += '<span class="groupbar-a">Đổi cụm ›</span></button>';
+    h += '<span class="groupbar-t">' + (curG ? '<span class="nw">Chữ ' + groupLabel(code, curG) + ' ·</span> ' : '') + '<span class="nw">đã học ' + seenCount + '/' + inRange.length + ' · ★ ' + reviewCount + '</span></span></span>';
+    h += '<span class="groupbar-a">Đổi cụm ›</span></button><button class="srch-btn" data-act="search-open" aria-label="Tìm từ và kanji">' + ICON.search + '</button></div>';
     h += '<div class="bar" aria-hidden="true"><i style="width:' + (inRange.length ? Math.round(seenCount / inRange.length * 100) : 0) + '%"></i></div>';
 
     h += modesGrid(l, reviewCount, w);
@@ -1197,7 +1198,7 @@
 
   /* v1.8: dải thu gọn hiện khi kéo xuống */
   function miniBar(left, pill) {
-    return '<button class="minibar" id="minibar" data-act="to-groups" tabindex="-1" aria-hidden="true"><span class="minibar-in"><span class="minibar-t">' + esc(left) + '</span><span class="minibar-r"><span class="pill">' + esc(pill) + '</span><span class="minibar-a">Đổi cụm ›</span></span></span></button>';
+    return '<div class="minibar" id="minibar" aria-hidden="true"><div class="minibar-in"><button class="minibar-main" data-act="to-groups"><span class="minibar-t">' + esc(left) + '</span><span class="minibar-r"><span class="pill">' + esc(pill) + '</span><span class="minibar-a">Đổi cụm ›</span></span></button><button class="srch-btn sm" data-act="search-open" aria-label="Tìm từ và kanji">' + ICON.search + '</button></div></div>';
   }
   function modesGrid(l, reviewCount, w) {
     var inReview = w ? l.review.indexOf(w.id) >= 0 : false;
@@ -1215,7 +1216,6 @@
     if (m.classList.contains('show') !== show) {
       m.classList.toggle('show', show);
       m.setAttribute('aria-hidden', show ? 'false' : 'true');
-      m.tabIndex = show ? 0 : -1;
     }
   }
 
@@ -1422,6 +1422,7 @@
         ui.fam = null; resetList(); ui.flipped = false; save(); ui.view = 'study'; render();
         toast('Đã mở từ ' + words(fc).map[fid].w + ' (cụm ' + fl.group + ').'); return;
       }
+      case 'search-open': openSearch(); return;
       case 'play-seq': startPlayer('seq'); return;
       case 'play-shuf': startPlayer('shuf'); return;
       case 'play-pause': if (player.paused) resumePlayer(); else pausePlayer(); return;
@@ -1505,7 +1506,7 @@
   });
 
   document.addEventListener('keydown', function (ev) {
-    if (ui.view !== 'study') return;
+    if (ui.view !== 'study' || document.body.classList.contains('srch-open')) return;
     var tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     if (ev.key === 'ArrowRight') { ev.preventDefault(); go(1); }
@@ -1530,6 +1531,148 @@
       go(dx < 0 ? 1 : -1);
     }
   }, { passive: true });
+
+  /* ---------------- v2.0: tìm từ & kanji trong mọi cụm ---------------- */
+  var srchIdx = null, srchEl = null, SRCH_MAX = 30;
+  function foldVi(x) {
+    return String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
+  }
+  function lowVi(x) { return String(x || '').normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function toHira(x) {
+    return String(x || '').replace(/[ァ-ヶ]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) - 0x60); });
+  }
+  function kanaKey(x) { return toHira(x).replace(/[\s.・()（）\-ー〜~]/g, function (ch) { return ch === 'ー' ? 'ー' : ''; }); }
+  function partsOf(x, fn) {
+    return String(x || '').split(/[,;、，/・()（）]+/).map(fn).filter(function (v) { return v; });
+  }
+  function buildSearchIndex() {
+    var vocab = [], kanji = [];
+    LEVELS.forEach(function (L) {
+      var d = words(L.code);
+      if (!d.list.length) return;
+      if (isKanji(L.code)) {
+        d.list.forEach(function (w) {
+          var info = kanjiInfo(w.w) || {};
+          kanji.push({ code: L.code, id: w.id, w: w.w, h: info.h || '', m: info.m || '',
+            hv: partsOf(info.h, foldVi), mm: partsOf(info.m, foldVi), mf: foldVi(info.m),
+            hvA: partsOf(info.h, lowVi), mmA: partsOf(info.m, lowVi), mfA: lowVi(info.m),
+            rd: partsOf((info.on || '') + '・' + (info.kun || ''), kanaKey) });
+        });
+      } else {
+        d.list.forEach(function (w) {
+          vocab.push({ code: L.code, id: w.id, w: w.w, r: w.r || '', m: w.m || '',
+            rk: kanaKey(w.r), mm: partsOf(w.m, foldVi), mf: foldVi(w.m), mmA: partsOf(w.m, lowVi), mfA: lowVi(w.m) });
+        });
+      }
+    });
+    return { vocab: vocab, kanji: kanji };
+  }
+  function rank(val, q) { if (!q || !val) return 9; if (val === q) return 0; if (val.indexOf(q) === 0) return 1; if (val.indexOf(q) > 0) return 2; return 9; }
+  function rankList(arr, q) { var b = 9; for (var i = 0; i < arr.length; i++) { var r = rank(arr[i], q); if (r < b) b = r; } return b; }
+  function runSearch(raw) {
+    if (!srchIdx) srchIdx = buildSearchIndex();
+    var q = String(raw || '').trim();
+    var qv = foldVi(q), qa = lowVi(q), qk = kanaKey(q), hasJa = /[぀-ヿ㐀-鿿]/.test(q);
+    var accent = qa !== qv; /* có gõ dấu thì tìm đúng dấu; không dấu thì tìm rộng */
+    var out = { vocab: [], kanji: [] };
+    if (!q) return out;
+    srchIdx.vocab.forEach(function (e) {
+      var s = 9;
+      if (hasJa) { s = Math.min(rank(e.w, q), rank(e.rk, qk)); }
+      else {
+        var sa = Math.min(rankList(e.mmA, qa), rank(e.mfA, qa) + 0.5);
+        s = accent ? sa : Math.min(sa < 9 ? sa - 0.3 : 9, rankList(e.mm, qv), rank(e.mf, qv) + 0.5);
+      }
+      if (s < 9) out.vocab.push({ e: e, s: s });
+    });
+    var chars = {};
+    Array.from(q).forEach(function (c) { if (/[㐀-鿿]/.test(c)) chars[c] = 1; });
+    srchIdx.kanji.forEach(function (e) {
+      var s = 9;
+      if (hasJa) {
+        if (chars[e.w]) s = q === e.w ? 0 : 1;
+        else if (qk && /^[぀-ゟ]+$/.test(qk)) s = Math.min(9, rankList(e.rd, qk) + 1);
+      } else {
+        var ka = Math.min(rankList(e.hvA, qa), rankList(e.mmA, qa) + 0.2, rank(e.mfA, qa) + 0.7);
+        s = accent ? ka : Math.min(ka < 9 ? ka - 0.3 : 9, rankList(e.hv, qv), rankList(e.mm, qv) + 0.2, rank(e.mf, qv) + 0.7);
+      }
+      if (s < 9) out.kanji.push({ e: e, s: s });
+    });
+    var by = function (a, b) { return a.s - b.s || (a.e.code < b.e.code ? -1 : a.e.code > b.e.code ? 1 : a.e.id - b.e.id); };
+    out.vocab.sort(by); out.kanji.sort(by);
+    return out;
+  }
+  function srchSection(title, arr, kind) {
+    if (!arr.length) return '';
+    var h = '<section class="srch-sec"><h2 class="srch-h">' + title + ' <span>' + arr.length + (arr.length > SRCH_MAX ? ' · hiện ' + SRCH_MAX + ' kết quả đầu' : '') + '</span></h2>';
+    arr.slice(0, SRCH_MAX).forEach(function (x) {
+      var e = x.e, L = levelInfo(e.code), g = groupOfId(e.code, e.id);
+      h += '<button class="srch-item" data-s="go" data-code="' + e.code + '" data-id="' + e.id + '">';
+      if (kind === 'v') {
+        h += '<span class="srch-w" lang="ja">' + esc(e.w) + '</span><span class="srch-mid"><span class="srch-r" lang="ja">' + esc(e.r) + '</span><span class="srch-m">' + esc(e.m) + '</span></span>';
+        h += '<span class="srch-lv">' + esc(e.code) + ' · Cụm ' + g + '</span>';
+      } else {
+        h += '<span class="srch-w kj" lang="ja">' + esc(e.w) + '</span><span class="srch-mid"><span class="srch-r">' + esc(e.h || '—') + '</span><span class="srch-m">' + esc(e.m || '') + '</span></span>';
+        h += '<span class="srch-lv">Kanji ' + esc(L.short) + ' · Cụm ' + g + '</span>';
+      }
+      h += '</button>';
+    });
+    return h + '</section>';
+  }
+  function renderSearch() {
+    if (!srchEl) return;
+    var q = srchEl.querySelector('#srch-q').value;
+    var box = srchEl.querySelector('#srch-res');
+    if (!q.trim()) {
+      box.innerHTML = '<p class="srch-hint">Gõ chữ Nhật (基準), hiragana (きじゅん), nghĩa tiếng Việt (tiêu chuẩn / tieu chuan) hoặc âm Hán Việt (chuan). Tìm trong tất cả các cụm Từ vựng và Kanji.</p>';
+      return;
+    }
+    var r = runSearch(q);
+    if (!r.vocab.length && !r.kanji.length) { box.innerHTML = '<p class="srch-hint">Không tìm thấy kết quả cho “' + esc(q.trim()) + '”.</p>'; return; }
+    box.innerHTML = srchSection('Từ vựng', r.vocab, 'v') + srchSection('Kanji', r.kanji, 'k');
+  }
+  function ensureSearchEl() {
+    if (srchEl) return srchEl;
+    srchEl = document.createElement('div');
+    srchEl.id = 'srch'; srchEl.className = 'srch'; srchEl.hidden = true;
+    srchEl.setAttribute('role', 'dialog'); srchEl.setAttribute('aria-modal', 'true'); srchEl.setAttribute('aria-label', 'Tìm từ và kanji');
+    srchEl.innerHTML = '<div class="srch-top"><div class="srch-bar"><label class="srch-field">' + ICON.search +
+      '<input id="srch-q" type="search" placeholder="Tìm từ, hiragana, nghĩa, kanji…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Từ cần tìm"></label>' +
+      '<button class="srch-x" data-s="close" aria-label="Đóng tìm kiếm">✕</button></div></div><div class="srch-body" id="srch-res" aria-live="polite"></div>';
+    document.body.appendChild(srchEl);
+    var inp = srchEl.querySelector('#srch-q'), tmr = 0;
+    inp.addEventListener('input', function () { clearTimeout(tmr); tmr = setTimeout(renderSearch, 80); });
+    inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); inp.blur(); } });
+    srchEl.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { ev.preventDefault(); closeSearch(); } });
+    srchEl.addEventListener('click', function (ev) {
+      var t = ev.target.closest('[data-s]'); if (!t) return;
+      if (t.getAttribute('data-s') === 'close') { closeSearch(); return; }
+      if (t.getAttribute('data-s') === 'go') openFromSearch(t.getAttribute('data-code'), parseInt(t.getAttribute('data-id'), 10));
+    });
+    return srchEl;
+  }
+  function openSearch() {
+    var el = ensureSearchEl();
+    el.hidden = false; document.body.classList.add('srch-open');
+    var inp = el.querySelector('#srch-q');
+    renderSearch();
+    try { inp.focus(); inp.select(); } catch (e) { /* bỏ qua */ }
+  }
+  function closeSearch() {
+    if (!srchEl || srchEl.hidden) return;
+    srchEl.hidden = true; document.body.classList.remove('srch-open');
+    try { var b = root.querySelector('[data-act="search-open"]'); if (b && b.offsetParent) b.focus({ preventScroll: true }); } catch (e) { /* bỏ qua */ }
+  }
+  function openFromSearch(code, id) {
+    var p = profile(); if (!p || !words(code).map[id]) return;
+    if (player.on) stopPlayer(true);
+    var l = lvState(p, code);
+    state.level = code; state.section = isKanji(code) ? 'kanji' : 'vocab';
+    l.group = groupOfId(code, id); l.mode = 'all'; l.cur = id;
+    ui.fam = null; resetList(); ui.flipped = false; ui.view = 'study';
+    save(); closeSearch(); render();
+    toast('Đã mở ' + words(code).map[id].w + ' (' + (isKanji(code) ? 'Kanji ' + levelInfo(code).short : code) + ' · cụm ' + l.group + ').');
+  }
 
   /* v1.8: hiện/ẩn dải thu gọn theo vị trí cuộn */
   var miniTick = false;
